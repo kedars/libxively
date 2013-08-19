@@ -7,8 +7,11 @@
  * \brief   Our custom `alloc()` and `free()` [see xi_allocator.h]
  */
 
-#include <stdlib.h>
+typedef int wint_t;
+
+#include <malloc.h>
 #include "xi_allocator.h"
+
 
 void* xi_alloc( size_t b )
 {
