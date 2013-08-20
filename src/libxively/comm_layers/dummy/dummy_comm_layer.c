@@ -4,9 +4,9 @@
 #include "dummy_comm.h"
 
 /**
- * \file 	posix_comm_layer.c
+ * \file 	dummy_comm_layer.c
  * \author 	Olgierd Humenczuk
- * \brief   Implements POSIX _communication layer_ functions [see comm_layer.h]
+ * \brief   Implements DUMMY _communication layer_ functions [see comm_layer.h]
  */
 
  /**
@@ -14,13 +14,13 @@
   */
 const comm_layer_t* get_comm_layer()
 {
-    static comm_layer_t __posix_comm_layer =
+    static comm_layer_t __dummy_comm_layer =
     {
-          &posix_open_connection
-        , &posix_send_data
-        , &posix_read_data
-        , &posix_close_connection
+          &dummy_open_connection
+        , &dummy_send_data
+        , &dummy_read_data
+        , &dummy_close_connection
     };
 
-    return &__posix_comm_layer;
+    return &__dummy_comm_layer;
 }
