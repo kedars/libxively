@@ -13,6 +13,13 @@
 #ifndef __XI_ALLOCATOR_H__
 #define __XI_ALLOCATOR_H__
 
+//XXX: should we include stdlib or malloc or both???
+#include <stdlib.h>
+#ifdef MISSING_WINT_T
+typedef int wint_t;
+#endif
+#include <malloc.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
