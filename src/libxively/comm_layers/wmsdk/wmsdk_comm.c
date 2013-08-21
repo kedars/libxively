@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include <lwip/sockets.h>
+
 #include "wmsdk_comm.h"
 #include "comm_layer.h"
 #include "xi_helpers.h"
@@ -27,8 +29,8 @@ connection_t* wmsdk_open_connection( const char* address, int32_t port )
     assert( address != 0 );
 
     // variables
-    wmsdk_comm_layer_data_specific_t* wmsdk_comm_data = 0;
-    connection_t* conn                              = 0;
+    wmsdk_comm_layer_data_specific_t* wmsdk_comm_data   = 0;
+    connection_t* conn                                  = 0;
 
     // allocate memory for the wmsdk data specific structure
     wmsdk_comm_data
@@ -50,8 +52,42 @@ connection_t* wmsdk_open_connection( const char* address, int32_t port )
 
     XI_CHECK_MEMORY( conn->address );
 
+    // initialze the fd for the TCP/IP socket
+    wmsdk_comm_data->socket_fd = socket( AF_INET, SOCK_STREAM, 0 );
+    if( wmsdk_comm_data->socket_fd == -1 )
+    {
+        xi_set_err( XI_SOCKET_INITIALIZATION_ERROR );
+        return 0;
+    }
+
     // remember the layer specific part
     conn->layer_specific = ( void* ) wmsdk_comm_data;
+
+    // socket specific data
+    struct sockaddr_in name;
+    struct hostent* hostinfo;
+
+    // get the hostaddress
+    hostinfo = gethostbyname( conn->address );
+
+    // if null it means that the address has not been founded
+    if( hostinfo == NULL )
+    {
+        xi_set_err( XI_SOCKET_GETHOSTBYNAME_ERROR );
+        goto err_handling;
+    }
+
+    // set the address and the port for further connection attempt
+    memset( &name, 0, sizeof( struct sockaddr_in ) );
+    name.sin_family = AF_INET;
+    name.sin_addr = *( ( struct in_addr* ) hostinfo->h_addr );
+    name.sin_port = htons( port );
+
+    if( connect( wmsdk_comm_data->socket_fd, ( struct sockaddr* ) &name, sizeof( struct sockaddr ) ) == -1 )
+    {
+        xi_set_err( XI_SOCKET_CONNECTION_ERROR );
+        goto err_handling;
+    }
 
     // POSTCONDITIONS
     assert( conn != 0 );
@@ -77,13 +113,20 @@ int wmsdk_send_data( connection_t* conn, const char* data, size_t size )
     assert( size != 0 );
 
     // extract the layer specific data
-    /*wmsdk_comm_layer_data_specific_t* wmsdk_comm_data
-        = ( wmsdk_comm_layer_data_specific_t* ) conn->layer_specific;*/
+    wmsdk_comm_layer_data_specific_t* wmsdk_comm_data
+        = ( wmsdk_comm_layer_data_specific_t* ) conn->layer_specific;
+
+    int bytes_written = write( wmsdk_comm_data->socket_fd, data, size );
+
+    if( bytes_written == - 1 )
+    {
+        xi_set_err( XI_SOCKET_WRITE_ERROR );
+    }
 
     // store the value
-    conn->bytes_sent += size;
+    conn->bytes_sent += bytes_written;
 
-    return size;
+    return bytes_written;
 }
 
 int wmsdk_read_data( connection_t* conn, char* buffer, size_t buffer_size )
@@ -95,15 +138,22 @@ int wmsdk_read_data( connection_t* conn, char* buffer, size_t buffer_size )
     assert( buffer_size != 0 );
 
     // extract the layer specific data
-    /*wmsdk_comm_layer_data_specific_t* wmsdk_comm_data
-        = ( wmsdk_comm_layer_data_specific_t* ) conn->layer_specific;*/
+    wmsdk_comm_layer_data_specific_t* wmsdk_comm_data
+        = ( wmsdk_comm_layer_data_specific_t* ) conn->layer_specific;
 
     memset( buffer, 0, buffer_size );
 
-    // store the value
-    conn->bytes_received += 0;
+    int bytes_read = read( wmsdk_comm_data->socket_fd, buffer, buffer_size );
 
-    return 0;
+    if( bytes_read == -1 )
+    {
+        xi_set_err( XI_SOCKET_READ_ERROR );
+    }
+
+    // store the value
+    conn->bytes_received += bytes_read;
+
+    return bytes_read;
 }
 
 void wmsdk_close_connection( connection_t* conn )
@@ -112,10 +162,25 @@ void wmsdk_close_connection( connection_t* conn )
     assert( conn != 0 );
 
     // extract the layer specific data
-    /*wmsdk_comm_layer_data_specific_t* wmsdk_comm_data
-        = ( wmsdk_comm_layer_data_specific_t* ) conn->layer_specific;*/
+    wmsdk_comm_layer_data_specific_t* wmsdk_comm_data
+        = ( wmsdk_comm_layer_data_specific_t* ) conn->layer_specific;
 
-//err_handling:
+    // shutdown the communication
+    if( shutdown( wmsdk_comm_data->socket_fd, SHUT_RDWR ) == -1 )
+    {
+        xi_set_err( XI_SOCKET_SHUTDOWN_ERROR );
+        close( wmsdk_comm_data->socket_fd ); // just in case
+        goto err_handling;
+    }
+
+    // close the connection & the socket
+    if( close( wmsdk_comm_data->socket_fd ) == -1 )
+    {
+        xi_set_err( XI_SOCKET_CLOSE_ERROR );
+        goto err_handling;
+    }
+
+err_handling:
     // cleanup the memory
     if( conn ) { XI_SAFE_FREE( conn->layer_specific ); }
     if( conn ) { XI_SAFE_FREE( conn->address ); }
