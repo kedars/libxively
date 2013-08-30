@@ -1,0 +1,50 @@
+diff --git a/tinytest.c b/tinytest.c
+index 36b3a62..f885422 100644
+--- a/tinytest.c
++++ b/tinytest.c
+@@ -62,8 +62,13 @@ static int n_ok = 0; /**< Number of tests that have passed */
+ static int n_bad = 0; /**< Number of tests that have failed. */
+ static int n_skipped = 0; /**< Number of tests that have been skipped. */
+ 
++#ifndef NEVER_FORK
+ static int opt_forked = 0; /**< True iff we're called from inside a win32 fork*/
+ static int opt_nofork = 0; /**< Suppress calls to fork() for debugging. */
++#else
++static int opt_forked = 0; /**< True iff we're called from inside a win32 fork*/
++static int opt_nofork = 1; /**< Suppress calls to fork() for debugging. */
++#endif
+ static int opt_verbosity = 1; /**< -==quiet,0==terse,1==normal,2==verbose */
+ const char *verbosity_flag = "";
+ 
+@@ -111,6 +116,7 @@ testcase_run_bare_(const struct testcase_t *testcase)
+ 
+ #define MAGIC_EXITCODE 42
+ 
++#ifndef NEVER_FORK
+ static enum outcome
+ testcase_run_forked_(const struct testgroup_t *group,
+ 		     const struct testcase_t *testcase)
+@@ -210,6 +216,7 @@ testcase_run_forked_(const struct testgroup_t *group,
+ 	}
+ #endif
+ }
++#endif
+ 
+ int
+ testcase_run_one(const struct testgroup_t *group,
+@@ -234,11 +241,15 @@ testcase_run_one(const struct testgroup_t *group,
+ 		cur_test_name = testcase->name;
+ 	}
+ 
++#ifndef NEVER_FORK
+ 	if ((testcase->flags & TT_FORK) && !(opt_forked||opt_nofork)) {
+ 		outcome = testcase_run_forked_(group, testcase);
+ 	} else {
+ 		outcome = testcase_run_bare_(testcase);
+ 	}
++#else
++        outcome = testcase_run_bare_(testcase);
++#endif
+ 
+ 	if (outcome == OK) {
+ 		++n_ok;
