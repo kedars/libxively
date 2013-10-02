@@ -19,7 +19,7 @@
  * \param   type simple pointer to type structure
  * \return  pointer to allocated layer_t structure
  */
-static inline layer_t* default_layer_heap_alloc( const layer_type_t* type, const char layer_variant )
+static inline layer_t* default_layer_heap_alloc( const layer_type_t* type, const unsigned char layer_variant )
 {
     layer_t* ret = ( layer_t* ) xi_alloc( sizeof( layer_t ) );
 

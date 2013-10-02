@@ -25,7 +25,7 @@ typedef struct
 
 
 #define LAYER_LOCAL_TYPE( type_name, layer_type_id, on_demand, on_read, on_close, close )\
-    static layer_type_t type_name = { layer_type_id, { { on_demand, on_read, on_close, close } } }
+    layer_type_t type_name = { layer_type_id, ( layer_interface_t[] ){ { on_demand, on_read, on_close, close } } }
 
 
 #endif

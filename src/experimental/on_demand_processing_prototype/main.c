@@ -116,7 +116,7 @@ int main( int argc, const char* argv[] )
     ( void ) argv;
 
     void* user_datas[] = { 0, 0 };
-    char layer_variants[] = { LV_IO_DEFAULT, LV_DUMMY_V1 };
+    unsigned char layer_variants[] = { LV_IO_DEFAULT, LV_DUMMY_V1 };
 
     layer_chain_t layer_chain = create_and_connect_layers( CONNECTION_SCHEME_1, layer_variants, user_datas, CONNECTION_SCHEME_LENGTH( CONNECTION_SCHEME_1 ) );
 

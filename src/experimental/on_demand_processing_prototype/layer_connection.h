@@ -76,7 +76,7 @@ static inline layer_chain_t connect_layers( layer_t* layers[], const size_t leng
  */
 static inline layer_chain_t create_and_connect_layers(
           const layer_type_id_t layers_ids[]
-        , const char layer_variants[]
+        , const unsigned char layer_variants[]
         , void* user_datas[]
         , const size_t length )
 {

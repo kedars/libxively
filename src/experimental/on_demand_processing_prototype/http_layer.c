@@ -38,15 +38,15 @@ layer_state_t http_layer_on_data_ready_datastream_update(
     , const char impulse )
 {
     XI_UNUSED( impulse );
+    XI_UNUSED( data );
 
     char buff[ 32 ];
     memset( buff, 0, sizeof( buff ) );
 
-
     // SEND TYPE
     {
-        data_descriptor_t tmp_data = { XI_HTTP_GET, sizeof( XI_HTTP_GET ) };
-        CALL_ON_PREV_ON_DATA_READY( context->self, ( void* ) &tmp_data, 0 );
+        const_data_descriptor_t tmp_data = { XI_HTTP_GET, sizeof( XI_HTTP_GET ) };
+        CALL_ON_PREV_ON_DATA_READY( context->self, ( const void* ) &tmp_data, 0 );
     }
     // SEND ADDRESS
     {
